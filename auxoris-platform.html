@@ -1,0 +1,1218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AUXORIS — Digital Execution Platform</title>
+<style>
+/* ─── RESET & BASE ─────────────────────────────────────────── */
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden;font-family:Arial,sans-serif;font-size:8px;background:#f0f2f5;color:#1a1a2e}
+
+/* ─── FONT HIERARCHY ───────────────────────────────────────── */
+.h1{font-size:12px;font-weight:700;color:#1a1a2e}          /* Header */
+.h2{font-size:9px;font-weight:700;color:#1a1a2e}           /* Sub-header */
+.txt{font-size:8px;font-weight:400;color:#444}             /* Body text */
+.txt-dim{font-size:8px;font-weight:400;color:#888}         /* Dim text */
+.txt-mono{font-size:8px;font-family:Arial,sans-serif;color:#444}
+.txt-bold{font-size:8px;font-weight:700}
+
+/* ─── SCROLLBARS ───────────────────────────────────────────── */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:#f0f2f5}
+::-webkit-scrollbar-thumb{background:#d0d4dc;border-radius:2px}
+
+/* ─── LAYOUT ───────────────────────────────────────────────── */
+#app{display:flex;height:100vh}
+
+/* ─── SIDEBAR ──────────────────────────────────────────────── */
+#sidebar{
+  width:190px;min-width:190px;background:#fff;
+  border-right:1px solid #e2e6ea;display:flex;flex-direction:column;
+  transition:width .22s ease,min-width .22s ease;
+  overflow:hidden;flex-shrink:0;
+}
+#sidebar.collapsed{width:42px;min-width:42px}
+
+.sidebar-logo{
+  padding:10px 12px;border-bottom:1px solid #e2e6ea;
+  display:flex;align-items:center;gap:8;overflow:hidden;
+}
+.logo-icon{
+  width:26px;height:26px;border-radius:5px;flex-shrink:0;
+  background:#1e3a8a;display:flex;align-items:center;
+  justify-content:center;color:#fff;font-size:11px;font-weight:700;
+}
+.logo-text{overflow:hidden;white-space:nowrap}
+.logo-title{font-size:12px;font-weight:700;color:#1e3a8a;letter-spacing:.5px;line-height:1}
+.logo-sub{font-size:7px;color:#888;margin-top:2px;letter-spacing:.5px}
+
+#nav{flex:1;overflow-y:auto;padding:6px 4px}
+.nav-group{
+  font-size:7px;font-weight:700;color:#bbb;letter-spacing:1.5px;
+  padding:10px 8px 3px;text-transform:uppercase;white-space:nowrap;overflow:hidden
+}
+#sidebar.collapsed .nav-group{opacity:0;height:0;padding:0}
+
+.nav-btn{
+  width:100%;padding:6px 8px;background:transparent;
+  border:1px solid transparent;border-radius:5px;
+  cursor:pointer;display:flex;align-items:center;gap:7;
+  margin-bottom:1px;transition:all .12s;white-space:nowrap;text-align:left;
+}
+#sidebar.collapsed .nav-btn{justify-content:center;padding:7px 0}
+.nav-btn:hover{background:#f5f7fa}
+.nav-btn.active{background:#eff4ff;border-color:#c7d7fd}
+.nav-btn.active .nav-label{color:#1e3a8a;font-weight:700}
+.nav-icon{font-size:11px;flex-shrink:0;width:14px;text-align:center}
+.nav-label{font-size:8px;font-weight:500;color:#444;overflow:hidden;text-overflow:ellipsis}
+.nav-id{font-size:7px;color:#aaa;margin-right:2px}
+#sidebar.collapsed .nav-label,.nav-id-wrap{display:none}
+#sidebar.collapsed .nav-label{display:none}
+
+.sidebar-toggle{
+  padding:8px;background:transparent;border:none;border-top:1px solid #e2e6ea;
+  cursor:pointer;color:#aaa;font-size:9px;display:flex;
+  align-items:center;justify-content:flex-end;padding-right:12px;transition:all .12s;
+}
+#sidebar.collapsed .sidebar-toggle{justify-content:center;padding-right:0}
+.sidebar-toggle:hover{color:#666}
+
+/* ─── MAIN ─────────────────────────────────────────────────── */
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+
+/* ─── TOPBAR ───────────────────────────────────────────────── */
+#topbar{
+  background:#fff;border-bottom:1px solid #e2e6ea;
+  padding:8px 16px;display:flex;align-items:center;gap:10;flex-shrink:0;
+}
+.topbar-left{flex:1;min-width:0}
+.topbar-crumb{font-size:7px;color:#aaa;letter-spacing:1px;margin-bottom:2px;text-transform:uppercase}
+.topbar-name{font-size:12px;font-weight:700;color:#1a1a2e;line-height:1}
+
+.kpi-pill{
+  background:#f8f9fb;border:1px solid #e2e6ea;border-radius:4px;
+  padding:4px 10px;text-align:center;flex-shrink:0;
+}
+.kpi-pill-v{font-size:11px;font-weight:700;line-height:1}
+.kpi-pill-l{font-size:7px;color:#888;margin-top:1px;text-transform:uppercase;letter-spacing:.5px}
+
+.clock-box{background:#f8f9fb;border:1px solid #e2e6ea;border-radius:4px;padding:4px 10px;text-align:center;flex-shrink:0}
+.clock-time{font-size:11px;font-weight:700;color:#1e3a8a;letter-spacing:1px;line-height:1}
+.clock-date{font-size:7px;color:#888;margin-top:1px}
+
+/* ─── MODULE TABS ──────────────────────────────────────────── */
+#modtabs{
+  background:#fff;border-bottom:1px solid #e2e6ea;
+  padding:0 16px;display:flex;overflow-x:auto;flex-shrink:0;
+}
+#modtabs::-webkit-scrollbar{height:2px}
+.mod-tab{
+  padding:6px 11px;background:transparent;border:none;
+  border-bottom:2px solid transparent;cursor:pointer;
+  font-size:8px;font-weight:600;font-family:Arial,sans-serif;
+  letter-spacing:.3px;white-space:nowrap;flex-shrink:0;
+  transition:all .12s;color:#aaa;text-transform:uppercase;
+}
+.mod-tab.active{color:var(--tc,#1e3a8a);border-bottom-color:var(--tc,#1e3a8a)}
+.mod-tab:hover:not(.active){color:#555;background:#f8f9fb}
+
+/* ─── CONTENT ──────────────────────────────────────────────── */
+#content{flex:1;overflow-y:auto;padding:14px 16px;background:#f0f2f5}
+
+/* ─── FOOTER ───────────────────────────────────────────────── */
+#footer{
+  background:#fff;border-top:1px solid #e2e6ea;
+  padding:4px 16px;display:flex;justify-content:space-between;
+  font-size:7px;color:#bbb;flex-shrink:0;letter-spacing:.3px;
+}
+
+/* ─── TOAST ────────────────────────────────────────────────── */
+#toast{
+  position:fixed;bottom:16px;right:16px;z-index:9999;
+  background:#1e3a8a;border-radius:4px;padding:7px 14px;
+  font-size:8px;color:#fff;box-shadow:0 3px 12px rgba(0,0,0,.15);
+  opacity:0;transition:opacity .18s;pointer-events:none;
+}
+#toast.show{opacity:1}
+
+/* ─── CARDS ────────────────────────────────────────────────── */
+.card{
+  background:#fff;border:1px solid #e2e6ea;border-radius:6px;
+  padding:12px 14px;
+}
+.card-header{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:10px;padding-bottom:7px;border-bottom:1px solid #f0f2f5;
+}
+.card-title{font-size:9px;font-weight:700;color:#1a1a2e;text-transform:uppercase;letter-spacing:.5px}
+
+/* ─── STAT CARDS ───────────────────────────────────────────── */
+.stat-card{
+  background:#fff;border:1px solid #e2e6ea;border-radius:6px;
+  padding:10px 12px;position:relative;overflow:hidden;
+}
+.stat-card-accent{
+  position:absolute;top:0;left:0;right:0;height:2px;
+  background:var(--ac,#1e3a8a);
+}
+.stat-v{font-size:20px;font-weight:700;line-height:1;margin-bottom:3px}
+.stat-l{font-size:7px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.8px}
+.stat-sub{font-size:7px;color:#aaa;margin-top:4px}
+.stat-delta{font-size:7px;font-weight:700;margin-top:2px}
+
+/* ─── TABLES ───────────────────────────────────────────────── */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+thead th{
+  font-size:7px;font-weight:700;color:#888;text-transform:uppercase;
+  letter-spacing:.8px;padding:6px 8px;background:#f8f9fb;
+  border-bottom:1px solid #e2e6ea;white-space:nowrap;text-align:center;
+}
+thead th.tl{text-align:left}
+tbody td{
+  font-size:8px;color:#333;padding:6px 8px;
+  border-bottom:1px solid #f0f2f5;text-align:center;
+}
+tbody td.tl{text-align:left}
+tbody tr:hover td{background:#fafbff}
+tbody tr:last-child td{border-bottom:none}
+
+/* ─── BADGE ────────────────────────────────────────────────── */
+.badge{
+  display:inline-block;padding:2px 6px;border-radius:3px;
+  font-size:7px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;
+  font-family:Arial,sans-serif;
+}
+
+/* ─── BAR ──────────────────────────────────────────────────── */
+.bar-wrap{background:#f0f2f5;border-radius:99px;overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;transition:width 1s ease}
+
+/* ─── PROGRESS BAR ROW ─────────────────────────────────────── */
+.prog-row{display:flex;align-items:center;gap:8;margin-bottom:7px}
+.prog-label{font-size:8px;color:#333;width:88px;flex-shrink:0}
+.prog-bar{flex:1}
+.prog-val{font-size:8px;font-weight:700;width:32px;text-align:right;flex-shrink:0}
+.prog-delta{font-size:7px;font-weight:700;width:26px;text-align:right;flex-shrink:0}
+
+/* ─── GRID HELPERS ─────────────────────────────────────────── */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.g5{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.g6{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+.mb10{margin-bottom:10px}
+.mb14{margin-bottom:10px}
+
+/* ─── SECTION LABEL ────────────────────────────────────────── */
+.sec-lbl{font-size:9px;font-weight:700;color:#1a1a2e;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px}
+
+/* ─── RING SVG LABEL ───────────────────────────────────────── */
+.ring-wrap{display:flex;flex-direction:column;align-items:center;gap:3px}
+.ring-lbl{font-size:7px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px}
+
+/* ─── COMM CARD ────────────────────────────────────────────── */
+.comm-card{background:#fff;border:1px solid #e2e6ea;border-radius:6px;padding:12px;border-top:3px solid var(--cc,#1e3a8a)}
+
+/* ─── MP KPI ───────────────────────────────────────────────── */
+.mp-kpi-row{display:flex;align-items:center;gap:6;margin-bottom:5px}
+.mp-kpi-l{font-size:7px;font-weight:700;color:#888;width:38px;flex-shrink:0;text-transform:uppercase}
+.mp-kpi-v{font-size:7px;font-weight:700;width:22px;text-align:right;flex-shrink:0}
+
+/* ─── FADE IN ──────────────────────────────────────────────── */
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.fade-in{animation:fadeIn .2s ease}
+
+/* ─── STATUS DOT ───────────────────────────────────────────── */
+.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;display:inline-block}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.dot-live{animation:pulse 2s infinite}
+
+/* ─── SEPARATOR ────────────────────────────────────────────── */
+.sep{border:none;border-top:1px solid #f0f2f5;margin:8px 0}
+
+/* ─── MATRIX CELL ──────────────────────────────────────────── */
+.mx-cell{width:32px;height:32px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700}
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- SIDEBAR -->
+  <div id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">A</div>
+      <div class="logo-text">
+        <div class="logo-title">AUXORIS</div>
+        <div class="logo-sub">v1.0 · 3SGT · EXECUTION</div>
+      </div>
+    </div>
+    <div id="nav"></div>
+    <button class="sidebar-toggle" onclick="toggleSidebar()" title="Collapse">&#9664;</button>
+  </div>
+
+  <!-- MAIN -->
+  <div id="main">
+    <div id="topbar">
+      <div class="topbar-left">
+        <div class="topbar-crumb" id="crumb">AUXORIS · M00 · EXECUTIVE</div>
+        <div class="topbar-name" id="modname">Command Center</div>
+      </div>
+      <div class="kpi-pill"><div class="kpi-pill-v" style="color:#1e3a8a">58.1%</div><div class="kpi-pill-l">Overall</div></div>
+      <div class="kpi-pill"><div class="kpi-pill-v" style="color:#d97706">0.922</div><div class="kpi-pill-l">SPI</div></div>
+      <div class="kpi-pill"><div class="kpi-pill-v" style="color:#0369a1">432</div><div class="kpi-pill-l">On Site</div></div>
+      <div class="kpi-pill"><div class="kpi-pill-v" style="color:#dc2626">1</div><div class="kpi-pill-l">LTI</div></div>
+      <div class="clock-box">
+        <div class="clock-time" id="clock">00:00:00</div>
+        <div class="clock-date" id="cdate"></div>
+      </div>
+    </div>
+
+    <div id="modtabs"></div>
+    <div id="content" class="fade-in"></div>
+
+    <div id="footer">
+      <span>AUXORIS PLATFORM &nbsp;·&nbsp; 11 MODULES &nbsp;·&nbsp; PROJECT 3SGT</span>
+      <span>Sabah Energy Corp &nbsp;·&nbsp; AUXORIS Sdn Bhd &nbsp;·&nbsp; USD 485M EPCC</span>
+    </div>
+  </div>
+</div>
+<div id="toast"><span id="toast-msg"></span></div>
+
+<script>
+// ════════════════════════════════════════════════════════════
+// DATA
+// ════════════════════════════════════════════════════════════
+const PROJECT = {
+  code:'3SGT', name:'LNG Train 3 — Sabah Gas Terminal',
+  client:'Sabah Energy Corp', epc:'AUXORIS Sdn Bhd',
+  budget:485000000, planned:'2026-06-30', forecast:'2026-09-15',
+  overall:58.1, planned_pct:63.0, spi:0.922, cpi:0.961
+};
+
+const MODULES = [
+  {id:'M00',code:'CMD', label:'Command Center', icon:'◈', color:'#1e3a8a', group:'EXECUTIVE'},
+  {id:'M03',code:'LL',  label:'Line List',       icon:'≡', color:'#b45309', group:'ENGINEERING'},
+  {id:'M06',code:'WLD', label:'Weld Tracker',    icon:'◎', color:'#c2410c', group:'CONSTRUCTION'},
+  {id:'M08',code:'PRG', label:'Progress',        icon:'▦', color:'#047857', group:'CONSTRUCTION'},
+  {id:'M09',code:'TP',  label:'Test Packs',      icon:'◉', color:'#0369a1', group:'TESTING'},
+  {id:'M10',code:'MC',  label:'MC & Punch',      icon:'✓', color:'#7c3aed', group:'TESTING'},
+  {id:'M11',code:'COM', label:'Commissioning',   icon:'⚡', color:'#065f46', group:'COMMISSIONING'},
+  {id:'M12',code:'DOC', label:'Documents',       icon:'▤', color:'#92400e', group:'ENGINEERING'},
+  {id:'M13',code:'HSE', label:'HSE',             icon:'⚠', color:'#dc2626', group:'SAFETY'},
+  {id:'M14',code:'MP',  label:'Manpower',        icon:'◈', color:'#1d4ed8', group:'RESOURCES'},
+  {id:'M15',code:'RPT', label:'Reports',         icon:'▣', color:'#6d28d9', group:'EXECUTIVE'},
+];
+
+// ════════════════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════════════════
+let sidebarCollapsed = false;
+
+function init() {
+  buildNav(); buildTabs(); startClock(); setModule('M00');
+}
+
+function buildNav() {
+  const nav = document.getElementById('nav');
+  const groups = [...new Set(MODULES.map(m => m.group))];
+  groups.forEach(grp => {
+    const gDiv = document.createElement('div');
+    gDiv.innerHTML = `<div class="nav-group">${grp}</div>`;
+    MODULES.filter(m => m.group === grp).forEach(mod => {
+      const btn = document.createElement('button');
+      btn.className = 'nav-btn';
+      btn.id = `nav-${mod.id}`;
+      btn.title = mod.label;
+      btn.innerHTML = `<span class="nav-icon" style="color:${mod.color}">${mod.icon}</span>
+        <span class="nav-label"><span class="nav-id">${mod.id !== 'M00' ? mod.id + ' ' : ''}</span>${mod.label}</span>`;
+      btn.onclick = () => setModule(mod.id);
+      gDiv.appendChild(btn);
+    });
+    nav.appendChild(gDiv);
+  });
+}
+
+function buildTabs() {
+  const tabs = document.getElementById('modtabs');
+  MODULES.forEach(mod => {
+    const btn = document.createElement('button');
+    btn.className = 'mod-tab';
+    btn.id = `tab-${mod.id}`;
+    btn.style.setProperty('--tc', mod.color);
+    btn.textContent = mod.code;
+    btn.onclick = () => setModule(mod.id);
+    tabs.appendChild(btn);
+  });
+}
+
+function setModule(id) {
+  const mod = MODULES.find(m => m.id === id);
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.mod-tab').forEach(b => b.classList.remove('active'));
+  const nb = document.getElementById(`nav-${id}`);
+  const tb = document.getElementById(`tab-${id}`);
+  if (nb) nb.classList.add('active');
+  if (tb) tb.classList.add('active');
+  document.getElementById('crumb').textContent = `AUXORIS · ${id} · ${mod.group}`;
+  document.getElementById('modname').textContent = mod.label;
+  const content = document.getElementById('content');
+  content.className = 'fade-in';
+  content.innerHTML = RENDERERS[id] ? RENDERERS[id]() : `<div style="padding:40px;text-align:center;color:#aaa;font-size:8px">Loading ${id}…</div>`;
+  content.offsetHeight;
+  initBars();
+}
+
+function toggleSidebar() {
+  sidebarCollapsed = !sidebarCollapsed;
+  const sb = document.getElementById('sidebar');
+  const btn = sb.querySelector('.sidebar-toggle');
+  sb.classList.toggle('collapsed', sidebarCollapsed);
+  btn.innerHTML = sidebarCollapsed ? '&#9654;' : '&#9664;';
+}
+
+function startClock() {
+  const tick = () => {
+    const n = new Date();
+    document.getElementById('clock').textContent = n.toLocaleTimeString('en-GB', {hour12: false});
+    document.getElementById('cdate').textContent = n.toLocaleDateString('en-GB', {day:'2-digit',month:'short',year:'numeric'});
+  };
+  tick(); setInterval(tick, 1000);
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+function initBars() {
+  setTimeout(() => {
+    document.querySelectorAll('.bar-fill[data-pct]').forEach(el => {
+      el.style.width = el.dataset.pct + '%';
+    });
+  }, 40);
+}
+
+// ════════════════════════════════════════════════════════════
+// HELPERS
+// ════════════════════════════════════════════════════════════
+function bar(pct, color, h = 5) {
+  return `<div class="bar-wrap" style="height:${h}px">
+    <div class="bar-fill" data-pct="${pct}" style="width:0%;height:${h}px;background:${color}"></div>
+  </div>`;
+}
+
+function badge(text, color, bg) {
+  bg = bg || color + '18';
+  return `<span class="badge" style="background:${bg};color:${color}">${text}</span>`;
+}
+
+function sc(value, label, color, sub='', delta='', deltaOk=true) {
+  return `<div class="stat-card">
+    <div class="stat-card-accent" style="--ac:${color}"></div>
+    <div class="stat-v" style="color:${color}">${value}</div>
+    <div class="stat-l">${label}</div>
+    ${sub ? `<div class="stat-sub">${sub}</div>` : ''}
+    ${delta ? `<div class="stat-delta" style="color:${deltaOk?'#16a34a':'#dc2626'}">${delta}</div>` : ''}
+  </div>`;
+}
+
+function tblWrap(title, color, headers, rows) {
+  const ths = headers.map(h => `<th class="${h.l ? (h.center === false ? 'tl' : '') : ''}">${h.l || h}</th>`).join('');
+  return `<div class="card mb10" style="padding:0">
+    <div style="padding:8px 12px;border-bottom:1px solid #f0f2f5;display:flex;align-items:center;gap:6">
+      <div style="width:3px;height:14px;border-radius:2px;background:${color}"></div>
+      <span class="card-title" style="color:${color}">${title}</span>
+    </div>
+    <div class="tbl-wrap">
+      <table><thead><tr>${ths}</tr></thead><tbody>${rows.join('')}</tbody></table>
+    </div>
+  </div>`;
+}
+
+function td(v, opts = {}) {
+  const cls = opts.center === false ? 'tl' : '';
+  const style = [
+    opts.color ? `color:${opts.color}` : '',
+    opts.bold ? 'font-weight:700' : '',
+    opts.sz ? `font-size:${opts.sz}px` : '',
+    opts.nowrap ? 'white-space:nowrap' : '',
+  ].filter(Boolean).join(';');
+  return `<td class="${cls}" style="${style}">${v}</td>`;
+}
+
+function drawSCurve(planned, actual, labels, W=520, H=140) {
+  const P = {l:28,r:8,t:8,b:20};
+  const iw = W - P.l - P.r, ih = H - P.t - P.b;
+  const max = Math.max(...planned) + 3;
+  const x = i => P.l + i / (planned.length - 1) * iw;
+  const y = v => P.t + ih - v / max * ih;
+  let grid = '';
+  [20,40,60,80].forEach(g => {
+    const yy = y(g);
+    grid += `<line x1="${P.l}" x2="${W-P.r}" y1="${yy}" y2="${yy}" stroke="#e2e6ea" stroke-width="1"/>
+    <text x="${P.l-3}" y="${yy+3}" text-anchor="end" fill="#bbb" font-size="6" font-family="Arial">${g}</text>`;
+  });
+  let xlbls = labels.map((l,i)=>`<text x="${x(i)}" y="${H-3}" text-anchor="middle" fill="#bbb" font-size="6" font-family="Arial">${l}</text>`).join('');
+  const pp = planned.map((v,i)=>`${i===0?'M':'L'}${x(i)},${y(v)}`).join(' ');
+  const af = `M${x(0)},${y(actual[0])} ` + actual.map((v,i)=>`L${x(i)},${y(v)}`).join(' ') + ` L${x(actual.length-1)},${H-P.b} L${P.l},${H-P.b} Z`;
+  const ap = actual.map((v,i)=>`${i===0?'M':'L'}${x(i)},${y(v)}`).join(' ');
+  const dots = actual.map((v,i)=>`<circle cx="${x(i)}" cy="${y(v)}" r="2.5" fill="#1e3a8a" stroke="#fff" stroke-width="1"/>`).join('');
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%">
+    ${grid}${xlbls}
+    <path d="${af}" fill="#dbeafe" opacity=".6"/>
+    <path d="${pp}" fill="none" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="5,3"/>
+    <path d="${ap}" fill="none" stroke="#1e3a8a" stroke-width="2"/>
+    ${dots}
+  </svg>`;
+}
+
+function ring(pct, color, size=64, stroke=6, label='') {
+  const r = (size - stroke) / 2;
+  const circ = 2 * Math.PI * r;
+  const off = circ * (1 - pct / 100);
+  return `<div class="ring-wrap">
+    <svg width="${size}" height="${size}" style="transform:rotate(-90deg)">
+      <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="#e2e6ea" stroke-width="${stroke}"/>
+      <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${color}" stroke-width="${stroke}"
+        stroke-dasharray="${circ}" stroke-dashoffset="${off}" stroke-linecap="round"
+        style="transition:stroke-dashoffset 1.2s ease"/>
+      <text x="${size/2}" y="${size/2+1}" text-anchor="middle" dominant-baseline="middle"
+        fill="${color}" font-size="${Math.round(size*.18)}" font-weight="700" font-family="Arial"
+        style="transform:rotate(90deg);transform-origin:${size/2}px ${size/2}px">${pct}%</text>
+    </svg>
+    ${label ? `<div class="ring-lbl">${label}</div>` : ''}
+  </div>`;
+}
+
+// ════════════════════════════════════════════════════════════
+// RENDERERS
+// ════════════════════════════════════════════════════════════
+const RENDERERS = {
+
+// ── M00 COMMAND CENTER ─────────────────────────────────────
+M00: () => {
+  const sp = [0.5,3.2,8.1,15.4,25.0,36.5,48.0,58.5,63.0];
+  const sa = [0.5,3.0,7.8,14.9,23.8,34.2,44.8,53.6,58.1];
+  const sl = ['J23','A23','J23','O23','J24','A24','J24','O24','D24'];
+
+  const kpis = [
+    {l:'Overall',     v:'58.1%',c:'#1e3a8a',sub:'Planned 63.0%',d:'−4.9%',ok:false},
+    {l:'SPI',         v:'0.922',c:'#d97706',sub:'Schedule Index',d:'−0.078',ok:false},
+    {l:'CPI',         v:'0.961',c:'#047857',sub:'Cost Index',    d:'−0.039',ok:true},
+    {l:'TRIR',        v:'0.22', c:'#047857',sub:'Target ≤ 0.50', d:'Good',   ok:true},
+    {l:'Man-Hours',   v:'1.84M',c:'#1e3a8a',sub:'LTI-free',      d:'+12k/wk',ok:true},
+    {l:'Manpower',    v:'432',  c:'#0369a1',sub:'On site today',  d:'↑ 22',   ok:true},
+    {l:'Cat A Punch', v:'8',    c:'#dc2626',sub:'Cat B: 134',     d:'RFC blk',ok:false},
+    {l:'LTIs',        v:'1',    c:'#dc2626',sub:'LTIR: 0.11',     d:'Open inv',ok:false},
+  ];
+
+  const areas = [
+    {code:'A03',name:'HP Separation', pct:72,c:'#16a34a',civil:95,pip:85,elec:60,inst:52},
+    {code:'A05',name:'Compression',   pct:45,c:'#d97706',civil:88,pip:52,elec:38,inst:28},
+    {code:'A09',name:'Cooling Water', pct:61,c:'#16a34a',civil:92,pip:68,elec:55,inst:44},
+    {code:'A11',name:'Flare System',  pct:38,c:'#dc2626',civil:72,pip:44,elec:22,inst:18},
+  ];
+
+  const mods = [
+    {n:'Line List',    pct:78,c:'#b45309',st:'on'},
+    {n:'Weld Tracker', pct:62,c:'#c2410c',st:'on'},
+    {n:'Progress',     pct:58,c:'#047857',st:'on'},
+    {n:'Test Packs',   pct:34,c:'#0369a1',st:'warn'},
+    {n:'MC & Punch',   pct:22,c:'#7c3aed',st:'warn'},
+    {n:'Commissioning',pct:18,c:'#065f46',st:'warn'},
+    {n:'Documents',    pct:81,c:'#92400e',st:'on'},
+    {n:'HSE',          pct:0, c:'#dc2626',st:'att'},
+    {n:'Manpower',     pct:0, c:'#1d4ed8',st:'on'},
+  ];
+  const stDot = {on:'#16a34a',warn:'#d97706',att:'#dc2626'};
+
+  const kpiH = kpis.map(k => `
+    <div class="stat-card">
+      <div class="stat-card-accent" style="--ac:${k.c}"></div>
+      <div class="stat-v" style="color:${k.c};font-size:18px">${k.v}</div>
+      <div class="stat-l">${k.l}</div>
+      <div style="display:flex;justify-content:space-between;margin-top:4px">
+        <span style="font-size:7px;color:#aaa">${k.sub}</span>
+        <span style="font-size:7px;font-weight:700;color:${k.ok?'#16a34a':'#dc2626'}">${k.d}</span>
+      </div>
+    </div>`).join('');
+
+  const areaH = areas.map(a => `
+    <div class="mb10">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+        <div>
+          <span class="h2" style="color:${a.c}">${a.code}</span>
+          <span class="txt-dim" style="margin-left:4px">${a.name}</span>
+        </div>
+        <span style="font-size:9px;font-weight:700;color:${a.c}">${a.pct}%</span>
+      </div>
+      ${bar(a.pct,a.c,6)}
+      <div style="display:flex;gap:4px;margin-top:4px">
+        ${[['CIV',a.civil,'#84cc16'],['PIP',a.pip,'#3b82f6'],['ELE',a.elec,'#f59e0b'],['INS',a.inst,'#06b6d4']].map(([l,v,c])=>`
+        <div style="flex:1">
+          <div style="font-size:6px;color:#aaa;text-align:center;margin-bottom:2px">${l}</div>
+          ${bar(v,c,3)}
+        </div>`).join('')}
+      </div>
+    </div>`).join('');
+
+  const modH = mods.map((m,i) => `
+    <div style="display:flex;align-items:center;gap:7;margin-bottom:5px;padding:5px 7px;background:#f8f9fb;border-radius:4px;border:1px solid #e2e6ea">
+      <div style="width:2px;height:22px;border-radius:1px;background:${m.c};flex-shrink:0"></div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+          <span class="txt" style="color:#333">${m.n}</span>
+          <span style="font-size:8px;font-weight:700;color:${m.c}">${m.pct}%</span>
+        </div>
+        ${bar(m.pct,m.c,4)}
+      </div>
+      <div class="dot" style="background:${stDot[m.st]}"></div>
+    </div>`).join('');
+
+  return `
+  <!-- Hero Banner -->
+  <div class="card mb10" style="border-left:4px solid #1e3a8a">
+    <div style="display:flex;gap:16;align-items:center;flex-wrap:wrap">
+      <div style="flex:1;min-width:180px">
+        <div style="font-size:7px;color:#aaa;letter-spacing:1px;margin-bottom:4px;text-transform:uppercase">
+          <span class="dot dot-live" style="background:#16a34a;vertical-align:middle;margin-right:4px"></span>
+          Live · ${PROJECT.code} · Execution Phase · Dec 2024
+        </div>
+        <div class="h1" style="font-size:13px;margin-bottom:3px">${PROJECT.name}</div>
+        <div class="txt-dim">${PROJECT.client} &nbsp;·&nbsp; ${PROJECT.epc} &nbsp;·&nbsp; USD ${(PROJECT.budget/1e6).toFixed(0)}M EPCC</div>
+      </div>
+      <div style="display:flex;gap:12;align-items:center">
+        ${ring(58.1,'#1e3a8a',72,7,'Overall')}
+        ${ring(63,'#cbd5e1',60,5,'Planned')}
+        <div style="text-align:right;border-left:1px solid #e2e6ea;padding-left:14px">
+          <div style="font-size:7px;font-weight:700;color:#dc2626;letter-spacing:.5px;margin-bottom:2px">BEHIND SCHEDULE</div>
+          <div style="font-size:22px;font-weight:700;color:#dc2626;line-height:1">−4.9%</div>
+          <div style="font-size:7px;color:#aaa;margin-top:2px">+77 days forecast delay</div>
+          <div style="font-size:7px;color:#aaa">Forecast: ${PROJECT.forecast}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- KPI Row -->
+  <div class="g4 mb10">${kpiH}</div>
+
+  <!-- Three Panels -->
+  <div style="display:grid;grid-template-columns:1fr 1.2fr 1fr;gap:10px">
+
+    <!-- Area Progress -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Area Progress</span>
+        <span style="font-size:7px;color:#aaa">4 areas</span>
+      </div>
+      ${areaH}
+    </div>
+
+    <!-- S-Curve -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">S-Curve — Planned vs Actual</span>
+        <span style="font-size:7px;font-weight:700;color:#dc2626">▼ −4.9%</span>
+      </div>
+      <div style="display:flex;gap:12;margin-bottom:6px">
+        <div style="display:flex;align-items:center;gap:4"><div style="width:14px;height:1.5px;background:#cbd5e1;border-top:1px dashed #aaa"></div><span style="font-size:7px;color:#aaa">Planned</span></div>
+        <div style="display:flex;align-items:center;gap:4"><div style="width:14px;height:2px;background:#1e3a8a"></div><span style="font-size:7px;color:#aaa">Actual</span></div>
+        <div style="display:flex;align-items:center;gap:4"><div style="width:14px;height:6px;background:#dbeafe;opacity:.8"></div><span style="font-size:7px;color:#aaa">Fill</span></div>
+      </div>
+      ${drawSCurve(sp,sa,sl)}
+      <div class="g3" style="margin-top:8px">
+        ${[['Planned Finish',PROJECT.planned,'#1e3a8a'],['Forecast',PROJECT.forecast,'#dc2626'],['Delay','+77 days','#dc2626']].map(([l,v,c])=>`
+        <div style="background:#f8f9fb;border-radius:4px;padding:6px 8px;text-align:center;border:1px solid #e2e6ea">
+          <div style="font-size:7px;color:#aaa;margin-bottom:2px">${l}</div>
+          <div style="font-size:8px;font-weight:700;color:${c}">${v}</div>
+        </div>`).join('')}
+      </div>
+    </div>
+
+    <!-- Module Status -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Module Status</span>
+        <div style="display:flex;gap:6;align-items:center">
+          <span class="dot" style="background:#16a34a"></span><span style="font-size:7px;color:#aaa">On Track</span>
+          <span class="dot" style="background:#d97706"></span><span style="font-size:7px;color:#aaa">At Risk</span>
+        </div>
+      </div>
+      ${modH}
+    </div>
+  </div>`;
+},
+
+// ── M03 LINE LIST ──────────────────────────────────────────
+M03: () => {
+  const lines = [
+    {no:'A03-PR-001',svc:'HP Gas',       fr:'V-3201',  to:'E-3301',  sz:'12"',spec:'A1B',mat:'CS',st:'AFC', test:'HYDRO',pct:100},
+    {no:'A03-PR-002',svc:'HP Gas',       fr:'E-3301',  to:'K-3101',  sz:'10"',spec:'A1B',mat:'CS',st:'IFC', test:'HYDRO',pct:85},
+    {no:'A03-PR-003',svc:'Condensate',   fr:'V-3201',  to:'P-3201A', sz:'6"', spec:'A1C',mat:'SS',st:'AFC', test:'HYDRO',pct:100},
+    {no:'A03-PR-004',svc:'MEG',          fr:'TK-3101', to:'P-3401',  sz:'3"', spec:'A2A',mat:'SS',st:'IFR', test:'HYDRO',pct:60},
+    {no:'A05-PR-001',svc:'Fuel Gas',     fr:'K-3101',  to:'V-3501',  sz:'8"', spec:'B1A',mat:'CS',st:'AFC', test:'HYDRO',pct:100},
+    {no:'A05-PR-002',svc:'CW Supply',    fr:'CT-3101', to:'E-3302',  sz:'20"',spec:'C1A',mat:'CS',st:'IFC', test:'PNEU', pct:75},
+    {no:'A09-PR-001',svc:'CW Return',    fr:'E-3302',  to:'CT-3101', sz:'20"',spec:'C1A',mat:'CS',st:'AFC', test:'PNEU', pct:100},
+    {no:'A09-PR-002',svc:'Closed Drain', fr:'V-3501',  to:'TK-3901', sz:'4"', spec:'D1A',mat:'CS',st:'IFC', test:'HYDRO',pct:65},
+    {no:'A11-PR-001',svc:'Flare Header', fr:'BDV-3101',to:'FLARE',   sz:'16"',spec:'B2A',mat:'CS',st:'IFR', test:'HYDRO',pct:45},
+    {no:'A05-PR-003',svc:'Seal Gas',     fr:'K-3101',  to:'V-3502',  sz:'2"', spec:'A1B',mat:'SS',st:'IFC', test:'HYDRO',pct:70},
+  ];
+  const SC = {AFC:'#16a34a',IFC:'#1d4ed8',IFR:'#d97706',HOLD:'#dc2626'};
+  const rows = lines.map(l => `<tr>
+    ${td('3SGT-'+l.no,{color:'#b45309',bold:true,center:false})}
+    ${td(l.svc,{center:false})}
+    ${td(l.fr,{color:'#888',sz:7})}
+    ${td(l.to,{color:'#888',sz:7})}
+    ${td(l.sz,{bold:true})}
+    ${td(l.spec,{color:'#aaa',sz:7})}
+    ${td(`<span style="color:${l.mat==='SS'?'#0369a1':'#666'};font-weight:700">${l.mat}</span>`,{})}
+    ${td(badge(l.st,SC[l.st]||'#888'),{})}
+    ${td(l.test,{color:'#aaa',sz:7})}
+    <td style="min-width:70px">${bar(l.pct,l.pct===100?'#16a34a':'#b45309',5)}<span style="font-size:7px;color:#aaa">${l.pct}%</span></td>
+  </tr>`);
+  return `
+  <div class="g5 mb10">
+    ${sc('2,847','Total Lines','#b45309','All disciplines','')}
+    ${sc('1,842','AFC Issued','#16a34a','64.7%','+22 this week',true)}
+    ${sc('623','IFC','#1d4ed8','21.9%','')}
+    ${sc('254','IFR','#d97706','8.9%','')}
+    ${sc('128','On Hold','#dc2626','4.5%','')}
+  </div>
+  ${tblWrap('Line Register','#b45309',
+    [{l:'Line Number',center:false},{l:'Service',center:false},'From','To','Size','Spec','Mat','Status','Test','Progress'],
+    rows)}`;
+},
+
+// ── M06 WELD TRACKER ──────────────────────────────────────
+M06: () => {
+  const welds = [
+    {id:'W-A03-001',line:'A03-PR-001',type:'BW',dia:'12"',wps:'WPS-CS-01',wldr:'WLD-001',date:'2024-11-28',vt:'PASS', rt:'PASS',  ut:'—',   st:'ACCEPTED'},
+    {id:'W-A03-002',line:'A03-PR-001',type:'BW',dia:'12"',wps:'WPS-CS-01',wldr:'WLD-002',date:'2024-11-29',vt:'PASS', rt:'REJECT',ut:'—',   st:'REJECTED'},
+    {id:'W-A03-003',line:'A03-PR-002',type:'SW',dia:'10"',wps:'WPS-CS-02',wldr:'WLD-003',date:'2024-11-30',vt:'PASS', rt:'—',     ut:'PASS',st:'ACCEPTED'},
+    {id:'W-A03-004',line:'A03-PR-003',type:'BW',dia:'6"', wps:'WPS-SS-01',wldr:'WLD-004',date:'2024-12-01',vt:'PASS', rt:'PASS',  ut:'—',   st:'ACCEPTED'},
+    {id:'W-A05-001',line:'A05-PR-001',type:'BW',dia:'8"', wps:'WPS-CS-01',wldr:'WLD-001',date:'2024-12-02',vt:'PASS', rt:'REJECT',ut:'—',   st:'REJECTED'},
+    {id:'W-A05-002',line:'A05-PR-001',type:'SO',dia:'8"', wps:'WPS-CS-03',wldr:'WLD-005',date:'2024-12-03',vt:'PASS', rt:'PASS',  ut:'—',   st:'ACCEPTED'},
+    {id:'W-A09-001',line:'A09-PR-001',type:'BW',dia:'20"',wps:'WPS-CS-04',wldr:'WLD-002',date:'2024-12-05',vt:'PASS', rt:'PASS',  ut:'PASS',st:'ACCEPTED'},
+    {id:'W-A09-002',line:'A09-PR-002',type:'BW',dia:'4"', wps:'WPS-CS-01',wldr:'WLD-006',date:'2024-12-08',vt:'PEND', rt:'—',     ut:'—',   st:'PENDING'},
+    {id:'W-A11-001',line:'A11-PR-001',type:'BW',dia:'16"',wps:'WPS-CS-04',wldr:'WLD-003',date:'2024-12-09',vt:'PASS', rt:'PEND',  ut:'PEND',st:'PENDING'},
+  ];
+  const SC={ACCEPTED:'#16a34a',REJECTED:'#dc2626',PENDING:'#d97706'};
+  const NC=v=>v==='PASS'?'#16a34a':v==='REJECT'?'#dc2626':v==='PEND'?'#d97706':'#ccc';
+  const rr=((574/(11059+574))*100).toFixed(1);
+  const rows = welds.map(w=>`<tr>
+    ${td(w.id,{color:'#c2410c',bold:true,center:false})}
+    ${td(w.line,{color:'#aaa',sz:7,center:false})}
+    ${td(w.type,{bold:true})} ${td(w.dia,{bold:true})}
+    ${td(w.wps,{color:'#aaa',sz:7})} ${td(w.wldr,{color:'#0369a1',bold:true})}
+    ${td(w.date,{color:'#aaa',sz:7})}
+    ${td(`<span style="font-weight:700;color:${NC(w.vt)}">${w.vt}</span>`,{})}
+    ${td(`<span style="font-weight:700;color:${NC(w.rt)}">${w.rt}</span>`,{})}
+    ${td(`<span style="font-weight:700;color:${NC(w.ut)}">${w.ut}</span>`,{})}
+    ${td(badge(w.st,SC[w.st]||'#888'),{})}
+  </tr>`);
+  return `
+  <div class="g5 mb10">
+    ${sc('18,420','Total Joints','#c2410c','All areas','')}
+    ${sc('11,059','Accepted','#16a34a','60.0%','')}
+    ${sc('574','Rejected','#dc2626','3.1%','')}
+    ${sc('2,200','Pending NDT','#d97706','11.9%','')}
+    ${sc(rr+'%','Repair Rate',parseFloat(rr)>5?'#dc2626':'#16a34a','Incl. repair welds','')}
+  </div>
+  ${tblWrap('Weld Joint Register','#c2410c',
+    [{l:'Joint ID',center:false},{l:'Line',center:false},'Type','Dia','WPS','Welder','Date','VT','RT','UT','Status'],
+    rows)}`;
+},
+
+// ── M08 PROGRESS ──────────────────────────────────────────
+M08: () => {
+  const discs = [
+    {n:'Civil',      plan:95,act:92,c:'#16a34a',d:'-3'},
+    {n:'Structural', plan:88,act:82,c:'#1d4ed8',d:'-6'},
+    {n:'Piping',     plan:72,act:65,c:'#ea580c',d:'-7'},
+    {n:'Mechanical', plan:68,act:64,c:'#7c3aed',d:'-4'},
+    {n:'Electrical', plan:52,act:46,c:'#d97706',d:'-6'},
+    {n:'Instrument', plan:44,act:38,c:'#0369a1',d:'-6'},
+    {n:'Insulation', plan:18,act:12,c:'#b45309',d:'-6'},
+    {n:'Painting',   plan:14,act:9, c:'#db2777',d:'-5'},
+  ];
+  const wkly = [
+    {w:'W48',plan:56.2,act:55.9},{w:'W49',plan:57.0,act:56.5},
+    {w:'W50',plan:57.8,act:57.1},{w:'W51',plan:58.5,act:57.6},{w:'W52',plan:59.0,act:58.1},
+  ];
+  const discH = discs.map(d=>`
+    <div class="prog-row">
+      <div class="prog-label">${d.n}</div>
+      <div class="prog-bar" style="position:relative">
+        <div style="position:absolute;top:0;left:0;right:0;bottom:0;border-radius:99px;background:#f0f2f5"></div>
+        <div style="position:absolute;top:1px;left:${d.plan}%;width:2px;bottom:1px;background:#cbd5e1;border-radius:1px;z-index:2"></div>
+        ${bar(d.act,d.c,5)}
+      </div>
+      <div class="prog-val" style="color:${d.c}">${d.act}%</div>
+      <div class="prog-delta" style="color:#dc2626">${d.d}</div>
+    </div>`).join('');
+  const wRows = wkly.map(w=>{
+    const v=(w.act-w.plan).toFixed(1);
+    return `<tr>
+      ${td(w.w,{bold:true,color:'#1e3a8a'})}
+      ${td(w.plan+'%',{color:'#aaa'})}
+      ${td(w.act+'%',{bold:true,color:'#047857'})}
+      ${td((parseFloat(v)>=0?'+':'')+v+'%',{bold:true,color:parseFloat(v)<0?'#dc2626':'#16a34a'})}
+    </tr>`;
+  });
+  return `
+  <div class="g4 mb10">
+    ${sc('58.1%','Overall Progress','#1e3a8a','vs 63.0% planned','')}
+    ${sc('1.2%','This Week','#0369a1','Increment','')}
+    ${sc('−4.9%','Behind Plan','#dc2626','Schedule variance','')}
+    ${sc('1.84M','Man-Hours','#7c3aed','Cumulative','')}
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Discipline Progress</span>
+        <div style="display:flex;gap:8;align-items:center">
+          <div style="width:12px;height:1px;background:#cbd5e1;border-top:1px dashed #aaa"></div><span style="font-size:7px;color:#aaa">Planned</span>
+          <div style="width:12px;height:5px;background:#3b82f6;border-radius:2px"></div><span style="font-size:7px;color:#aaa">Actual</span>
+        </div>
+      </div>
+      ${discH}
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div class="card">
+        <div class="card-header"><span class="card-title">Weekly Progress</span></div>
+        <table><thead><tr><th>Week</th><th>Planned</th><th>Actual</th><th>Variance</th></tr></thead>
+        <tbody>${wRows.join('')}</tbody></table>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Area Summary</span></div>
+        ${[['A03 HP Sep',72,'#16a34a'],['A05 Compression',45,'#d97706'],['A09 Cooling Water',61,'#0369a1'],['A11 Flare',38,'#dc2626']].map(([n,p,c])=>`
+        <div style="display:flex;align-items:center;gap:8;margin-bottom:6px">
+          <span class="txt" style="width:110px;flex-shrink:0">${n}</span>
+          <div style="flex:1">${bar(p,c,5)}</div>
+          <span style="font-size:8px;font-weight:700;color:${c};width:30px;text-align:right">${p}%</span>
+        </div>`).join('')}
+      </div>
+    </div>
+  </div>`;
+},
+
+// ── M09 TEST PACKS ─────────────────────────────────────────
+M09: () => {
+  const packs = [
+    {id:'TP-A03-0001',area:'A03',sys:'HP Separation',lines:8, hydro:'PASS',punch:2,date:'2024-11-20',st:'COMPLETE'},
+    {id:'TP-A03-0002',area:'A03',sys:'HP Separation',lines:6, hydro:'PASS',punch:0,date:'2024-11-28',st:'COMPLETE'},
+    {id:'TP-A03-0003',area:'A03',sys:'HP Separation',lines:10,hydro:'PEND',punch:4,date:'2024-12-05',st:'TESTING'},
+    {id:'TP-A05-0010',area:'A05',sys:'Compression',  lines:5, hydro:'PASS',punch:1,date:'2024-11-25',st:'COMPLETE'},
+    {id:'TP-A05-0011',area:'A05',sys:'Compression',  lines:7, hydro:'PEND',punch:3,date:'2024-12-08',st:'TESTING'},
+    {id:'TP-A05-0012',area:'A05',sys:'Compression',  lines:4, hydro:'FAIL',punch:0,date:'2024-12-09',st:'FAILED'},
+    {id:'TP-A09-0005',area:'A09',sys:'Cooling Water',lines:9, hydro:'PASS',punch:2,date:'2024-12-01',st:'COMPLETE'},
+    {id:'TP-A11-0001',area:'A11',sys:'Flare System', lines:3, hydro:'—',   punch:0,date:'—',         st:'RAISED'},
+  ];
+  const SC={COMPLETE:'#16a34a',TESTING:'#0369a1',FAILED:'#dc2626',RAISED:'#888'};
+  const HC=v=>v==='PASS'?'#16a34a':v==='FAIL'?'#dc2626':v==='PEND'?'#d97706':'#ccc';
+  const rows = packs.map(p=>`<tr>
+    ${td(p.id,{color:'#0369a1',bold:true,center:false})}
+    ${td(p.area,{bold:true,color:'#c2410c'})}
+    ${td(p.sys,{center:false})}
+    ${td(p.lines,{bold:true,color:'#555'})}
+    ${td(badge(p.st,SC[p.st]||'#888'),{})}
+    ${td(`<span style="font-weight:700;color:${HC(p.hydro)}">${p.hydro}</span>`,{})}
+    ${td(`<span style="font-weight:700;color:${p.punch>0?'#d97706':'#16a34a'}">${p.punch}</span>`,{})}
+    ${td(p.date,{color:'#aaa',sz:7})}
+  </tr>`);
+  return `
+  <div class="g5 mb10">
+    ${sc('486','Total Packs','#0369a1','','')}
+    ${sc('165','Complete','#16a34a','33.9%','')}
+    ${sc('28','Testing','#d97706','5.8%','')}
+    ${sc('285','Raised','#888','58.6%','')}
+    ${sc('8','Failed','#dc2626','1.6%','')}
+  </div>
+  ${tblWrap('Test Pack Register','#0369a1',
+    [{l:'Pack ID',center:false},'Area',{l:'System',center:false},'Lines','Status','Hydro Test','Punch Items','Date'],
+    rows)}`;
+},
+
+// ── M10 MC & PUNCH ─────────────────────────────────────────
+M10: () => {
+  const punch = [
+    {id:'PC-001',cat:'A',area:'A03',desc:'Control valve CV-3201 fails closed — safety critical interlock',  raised:'2024-11-15',cl:false,own:'EPC'},
+    {id:'PC-002',cat:'A',area:'A03',desc:'Relief valve PSV-3202 seat leak — fails pressure retention test',raised:'2024-11-18',cl:false,own:'EPC'},
+    {id:'PC-003',cat:'B',area:'A03',desc:'Pipe support PS-3201-042 missing spring hanger lock nut',        raised:'2024-11-20',cl:false,own:'SC-01'},
+    {id:'PC-004',cat:'B',area:'A05',desc:'Compressor K-3101 coupling guard missing bolts ×4',              raised:'2024-11-25',cl:true, own:'SC-01'},
+    {id:'PC-005',cat:'B',area:'A05',desc:'Instrument air to FV-3501 — pipe spec deviation A1B/A1C',       raised:'2024-11-28',cl:false,own:'SC-02'},
+    {id:'PC-006',cat:'C',area:'A09',desc:'Paint touch-up required on CW pump base plate',                  raised:'2024-12-01',cl:false,own:'SC-06'},
+    {id:'PC-007',cat:'A',area:'A05',desc:'ESD valve EV-3101A fails full stroke functional test',           raised:'2024-12-05',cl:false,own:'SC-02'},
+    {id:'PC-008',cat:'B',area:'A11',desc:'Flare tip bolting incomplete — 6 studs missing',                raised:'2024-12-08',cl:false,own:'SC-01'},
+  ];
+  const CC={A:'#dc2626',B:'#d97706',C:'#888'};
+  const rows = punch.map(p=>`<tr>
+    ${td(p.id,{color:'#7c3aed',bold:true})}
+    <td style="text-align:center"><div style="width:22px;height:22px;margin:0 auto;border-radius:4px;background:${CC[p.cat]}18;border:1px solid ${CC[p.cat]}44;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:${CC[p.cat]}">${p.cat}</div></td>
+    ${td(p.area,{bold:true,color:'#c2410c'})}
+    ${td(p.desc,{center:false})}
+    ${td(p.raised,{color:'#aaa',sz:7})}
+    ${td(badge(p.cl?'CLOSED':'OPEN',p.cl?'#16a34a':'#dc2626',p.cl?'#f0fdf4':'#fef2f2'),{})}
+    ${td(p.own,{color:'#0369a1',bold:true})}
+  </tr>`);
+  return `
+  <div class="g3 mb10">
+    <div class="card" style="border-left:3px solid #dc2626">
+      <div class="h2" style="color:#dc2626;margin-bottom:6px">Cat A — Safety Critical</div>
+      <div style="font-size:28px;font-weight:700;color:#dc2626;line-height:1">8</div>
+      <div class="txt-dim" style="margin-top:4px">Must close before RFC</div>
+      <div style="margin-top:8px">${bar(0,'#dc2626',5)}</div>
+      <div style="font-size:7px;color:#aaa;margin-top:2px">0 of 8 closed</div>
+    </div>
+    <div class="card" style="border-left:3px solid #d97706">
+      <div class="h2" style="color:#d97706;margin-bottom:6px">Cat B — Non-Safety</div>
+      <div style="font-size:28px;font-weight:700;color:#d97706;line-height:1">134</div>
+      <div class="txt-dim" style="margin-top:4px">Must close before RFS</div>
+      <div style="margin-top:8px">${bar(20,'#d97706',5)}</div>
+      <div style="font-size:7px;color:#aaa;margin-top:2px">27 of 134 closed</div>
+    </div>
+    <div class="card" style="border-left:3px solid #888">
+      <div class="h2" style="color:#888;margin-bottom:6px">Cat C — Minor</div>
+      <div style="font-size:28px;font-weight:700;color:#888;line-height:1">45</div>
+      <div class="txt-dim" style="margin-top:4px">Close post-startup</div>
+      <div style="margin-top:8px">${bar(64,'#888',5)}</div>
+      <div style="font-size:7px;color:#aaa;margin-top:2px">29 of 45 closed</div>
+    </div>
+  </div>
+  ${tblWrap('Punch List Register','#7c3aed',
+    ['ID','Cat','Area',{l:'Description',center:false},'Raised','Status','Owner'],
+    rows)}`;
+},
+
+// ── M11 COMMISSIONING ─────────────────────────────────────
+M11: () => {
+  const sys = [
+    {id:'CS-3601',name:'Instrument Air',      loop:6, ld:6, func:2,fd:2,rfc:'2025-03-15',st:'RFC_DONE'},
+    {id:'CS-3501',name:'Fuel Gas System',     loop:10,ld:10,func:4,fd:3,rfc:'2025-04-01',st:'NEAR_RFC'},
+    {id:'CS-3201',name:'HP Separation',       loop:18,ld:14,func:6,fd:2,rfc:'2025-05-15',st:'IN_PROG'},
+    {id:'CS-3301',name:'Heat Exchange Train', loop:12,ld:8, func:4,fd:1,rfc:'2025-06-01',st:'IN_PROG'},
+    {id:'CS-3101',name:'Compression System',  loop:24,ld:6, func:8,fd:0,rfc:'2025-08-01',st:'IN_PROG'},
+    {id:'CS-3401',name:'MEG Recovery',        loop:8, ld:0, func:3,fd:0,rfc:'2025-07-15',st:'NOT_START'},
+  ];
+  const SM={RFC_DONE:'#16a34a',NEAR_RFC:'#0369a1',IN_PROG:'#d97706',NOT_START:'#aaa'};
+  const SL={RFC_DONE:'RFC Done',NEAR_RFC:'Near RFC',IN_PROG:'In Progress',NOT_START:'Not Started'};
+  const sysH = sys.map(s=>`
+    <div class="comm-card" style="--cc:${SM[s.st]}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+        <div>
+          <div class="txt-dim" style="margin-bottom:1px">${s.id}</div>
+          <div class="h2">${s.name}</div>
+        </div>
+        ${badge(SL[s.st],SM[s.st])}
+      </div>
+      <div class="g2">
+        <div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+            <span class="txt-dim">Loop Checks</span>
+            <span style="font-size:8px;font-weight:700;color:#d97706">${s.ld}/${s.loop}</span>
+          </div>
+          ${bar(Math.round(s.ld/s.loop*100),'#d97706',5)}
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+            <span class="txt-dim">Func Tests</span>
+            <span style="font-size:8px;font-weight:700;color:#7c3aed">${s.fd}/${s.func}</span>
+          </div>
+          ${bar(s.func>0?Math.round(s.fd/s.func*100):0,'#7c3aed',5)}
+        </div>
+      </div>
+      <div class="txt-dim" style="margin-top:6px">RFC Target: ${s.rfc}</div>
+    </div>`).join('');
+  return `
+  <div class="g4 mb10">
+    ${sc('6','Total Systems','#065f46','','')}
+    ${sc('1','RFC Complete','#16a34a','','')}
+    ${sc('44/78','Loop Checks','#d97706','Complete','')}
+    ${sc('8/27','Func Tests','#7c3aed','Complete','')}
+  </div>
+  <div class="g2">${sysH}</div>`;
+},
+
+// ── M12 DOCUMENTS ──────────────────────────────────────────
+M12: () => {
+  const docs = [
+    {no:'A03-MEC-PID-001',title:'HP Separator P&ID Sheet 1',        type:'P&ID',disc:'MEC',rev:'C3',st:'AFC',pg:1, issued:'2024-10-15'},
+    {no:'A03-INS-SPC-001',title:'Instrument Spec Sheet CV-3201',     type:'SPEC',disc:'INS',rev:'B2',st:'IFC',pg:4, issued:'2024-11-01'},
+    {no:'A05-MEC-GAD-001',title:'Compressor Skid GA Drawing',        type:'GA',  disc:'MEC',rev:'D1',st:'AFC',pg:2, issued:'2024-10-28'},
+    {no:'GEN-HSE-PLN-001',title:'Project HSE Plan Rev A2',           type:'PLAN',disc:'HSE',rev:'A2',st:'AFC',pg:48,issued:'2024-09-01'},
+    {no:'A09-CIV-DWG-001',title:'CW Pump Foundation Drawing',        type:'DWG', disc:'CIV',rev:'B1',st:'IFC',pg:2, issued:'2024-11-15'},
+    {no:'A11-PIP-ISO-001',title:'Flare Header Isometric Sheet 1',    type:'ISO', disc:'PIP',rev:'A1',st:'IFR',pg:1, issued:'2024-12-01'},
+    {no:'GEN-ELE-SLD-001',title:'Single Line Diagram MV Bus A',      type:'SLD', disc:'ELE',rev:'C2',st:'AFC',pg:3, issued:'2024-10-05'},
+    {no:'A03-PIP-MTO-001',title:'Material Take-Off Area A03',        type:'MTO', disc:'PIP',rev:'D2',st:'AFC',pg:12,issued:'2024-10-20'},
+  ];
+  const SC={AFC:'#16a34a',IFC:'#1d4ed8',IFR:'#d97706'};
+  const rows = docs.map(d=>`<tr>
+    ${td('3SGT-'+d.no,{color:'#92400e',bold:true,center:false,sz:7})}
+    ${td(d.title,{center:false})}
+    ${td(badge(d.type,'#1d4ed8'),{})}
+    ${td(d.disc,{bold:true,color:'#c2410c'})}
+    ${td(d.rev,{bold:true})}
+    ${td(badge(d.st,SC[d.st]||'#888'),{})}
+    ${td(d.pg,{color:'#888'})}
+    ${td(d.issued,{color:'#aaa',sz:7})}
+  </tr>`);
+  return `
+  <div class="g5 mb10">
+    ${sc('2,340','Total Docs','#92400e','','')}
+    ${sc('1,895','AFC','#16a34a','81.0%','')}
+    ${sc('289','IFC','#1d4ed8','12.3%','')}
+    ${sc('112','IFR','#d97706','4.8%','')}
+    ${sc('8','Open Trans','#dc2626','Awaiting resp.','')}
+  </div>
+  ${tblWrap('Document Register','#92400e',
+    [{l:'Doc Number',center:false},{l:'Title',center:false},'Type','Disc','Rev','Status','Pages','Issued'],
+    rows)}`;
+},
+
+// ── M13 HSE ────────────────────────────────────────────────
+M13: () => {
+  const incs = [
+    {id:'INC-001',date:'2024-10-12',type:'NEAR MISS', sev:3,area:'A03',desc:'Dropped object — 2" fitting from scaffold',             lti:false,st:'CLOSED'},
+    {id:'INC-002',date:'2024-10-28',type:'FIRST AID', sev:2,area:'A03',desc:'Minor laceration during pipe fitting activity',           lti:false,st:'CLOSED'},
+    {id:'INC-003',date:'2024-11-05',type:'NEAR MISS', sev:4,area:'A05',desc:'Crane slewed without signal — worker within zone',        lti:false,st:'OPEN'},
+    {id:'INC-004',date:'2024-11-18',type:'LTI',       sev:4,area:'A05',desc:'Foot injury — scaffold board failure, 14 days lost time', lti:true, st:'OPEN'},
+    {id:'INC-005',date:'2024-11-25',type:'NEAR MISS', sev:3,area:'A09',desc:'PRV discharged unexpectedly during hydrostatic test',     lti:false,st:'CLOSED'},
+    {id:'INC-006',date:'2024-12-03',type:'FIRST AID', sev:2,area:'A11',desc:'Eye irritation from chemical injection splash',           lti:false,st:'CLOSED'},
+    {id:'INC-007',date:'2024-12-08',type:'PROPERTY',  sev:3,area:'A03',desc:'Instrument transmitter damaged by mobile plant',          lti:false,st:'OPEN'},
+  ];
+  const TC={'NEAR MISS':'#d97706','FIRST AID':'#ea580c','LTI':'#dc2626','PROPERTY':'#0369a1'};
+  const SC={5:'#dc2626',4:'#ea580c',3:'#d97706',2:'#888',1:'#bbb'};
+  const matrix = [[5,10,15,20,25],[4,8,12,16,20],[3,6,9,12,15],[2,4,6,8,10],[1,2,3,4,5]];
+  const mc = v => v>=20?'#dc2626':v>=10?'#d97706':v>=5?'#ea580c':'#16a34a';
+  const matH = `<div style="display:inline-flex;flex-direction:column;gap:2px">
+    <div style="display:flex;gap:2px;padding-left:28px;margin-bottom:2px">
+      ${['1','2','3','4','5'].map(l=>`<div style="width:32px;text-align:center;font-size:6px;color:#aaa">${l}</div>`).join('')}
+    </div>
+    ${matrix.map((row,ri)=>`<div style="display:flex;align-items:center;gap:2px">
+      <div style="width:26px;text-align:right;font-size:6px;color:#aaa;padding-right:3px">${5-ri}</div>
+      ${row.map(v=>`<div class="mx-cell" style="background:${mc(v)}18;color:${mc(v)};border:1px solid ${mc(v)}22">${v}</div>`).join('')}
+    </div>`).join('')}
+    <div style="font-size:6px;color:#aaa;text-align:center;margin-top:3px;padding-left:28px">CONSEQUENCE →</div>
+  </div>`;
+  const rows = incs.map(inc=>`<tr>
+    ${td(inc.id,{color:'#dc2626',bold:true})}
+    ${td(inc.date,{color:'#aaa',sz:7})}
+    ${td(badge(inc.type,TC[inc.type]||'#888'),{})}
+    <td style="text-align:center"><div style="width:20px;height:20px;margin:0 auto;border-radius:3px;background:${SC[inc.sev]}18;border:1px solid ${SC[inc.sev]}33;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:${SC[inc.sev]}">${inc.sev}</div></td>
+    ${td(inc.area,{bold:true,color:'#c2410c'})}
+    ${td(inc.desc,{center:false})}
+    ${td(inc.lti?'<span style="color:#dc2626;font-weight:700">YES</span>':'No',{color:'#aaa'})}
+    ${td(badge(inc.st,inc.st==='CLOSED'?'#16a34a':'#dc2626',inc.st==='CLOSED'?'#f0fdf4':'#fef2f2'),{})}
+  </tr>`);
+  return `
+  <div class="g4 mb10">
+    ${sc('1,840,000','Man-Hours','#065f46','LTI-free cumulative','')}
+    ${sc('0.22','TRIR','#16a34a','Target ≤ 0.50','')}
+    ${sc('0.11','LTIR','#d97706','Per 200,000 hrs','')}
+    ${sc('1','LTIs','#dc2626','Investigation open','')}
+  </div>
+  <div class="g2 mb10">
+    <div class="card">
+      <div class="card-header"><span class="card-title">Risk Matrix</span></div>
+      <div style="display:flex;gap:16;align-items:flex-start;flex-wrap:wrap">
+        ${matH}
+        <div style="flex:1;min-width:120px">
+          ${[['≥ 20 — Extreme','#dc2626'],['10–19 — High','#d97706'],['5–9 — Medium','#ea580c'],['1–4 — Low','#16a34a']].map(([l,c])=>`
+          <div style="display:flex;align-items:center;gap:6;margin-bottom:6px">
+            <div style="width:10px;height:10px;border-radius:2px;background:${c}"></div>
+            <span class="txt">${l}</span>
+          </div>`).join('')}
+          <hr class="sep">
+          <div class="h2" style="color:#dc2626;margin-bottom:2px">3 High/Extreme Hazards</div>
+          <div class="txt-dim">Active on site — PTW required</div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-title">Permit to Work</span></div>
+      ${[['Active Permits','3','#16a34a'],['Suspended','1','#d97706'],['Expired Today','2','#dc2626'],['Issued This Week','18','#0369a1']].map(([l,v,c])=>`
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #f0f2f5">
+        <span class="txt">${l}</span>
+        <span style="font-size:14px;font-weight:700;color:${c}">${v}</span>
+      </div>`).join('')}
+    </div>
+  </div>
+  ${tblWrap('Incident Register','#dc2626',
+    [{l:'ID',center:false},'Date','Type','Sev','Area',{l:'Description',center:false},'LTI','Status'],
+    rows)}`;
+},
+
+// ── M14 MANPOWER ──────────────────────────────────────────
+M14: () => {
+  const subs = [
+    {id:'SC-01',name:'Petrotech Piping',   scope:'Mechanical & Piping', st:'ACTIVE',     on:212,pk:280,saf:94,qly:88,sch:76},
+    {id:'SC-02',name:'ElectraSystems (M)', scope:'Electrical & I&C',    st:'ACTIVE',     on:68, pk:95, saf:97,qly:91,sch:82},
+    {id:'SC-03',name:'Foundation Works',   scope:'Civil & Structural',   st:'MOBILISED',  on:44, pk:140,saf:89,qly:85,sch:68},
+    {id:'SC-04',name:'ScaffTech Services', scope:'Scaffolding',          st:'ACTIVE',     on:58, pk:60, saf:91,qly:90,sch:94},
+    {id:'SC-05',name:'InsulCoat Sdn Bhd',  scope:'Insulation',           st:'MOBILISING', on:12, pk:80, saf:85,qly:80,sch:55},
+    {id:'SC-06',name:'SandBlast Pro',      scope:'Coating & Painting',   st:'ACTIVE',     on:38, pk:45, saf:88,qly:86,sch:80},
+  ];
+  const SC={ACTIVE:'#16a34a',MOBILISED:'#0369a1',MOBILISING:'#d97706'};
+  const total = subs.reduce((s,c)=>s+c.on,0);
+  const peakT = subs.reduce((s,c)=>s+c.pk,0);
+  const daily = [{d:'02 Dec',v:398},{d:'03 Dec',v:408},{d:'04 Dec',v:418},{d:'05 Dec',v:425},{d:'06 Dec',v:432},{d:'07 Dec',v:432},{d:'08 Dec',v:432}];
+  const maxD = Math.max(...daily.map(d=>d.v));
+  const histH = daily.map(d=>`
+    <div style="display:flex;flex-direction:column;align-items:center;gap:3">
+      <span style="font-size:7px;font-weight:700;color:${d.v===maxD?'#1d4ed8':'#aaa'}">${d.v}</span>
+      <div style="width:30px;background:#f0f2f5;border-radius:3px 3px 0 0;height:50px;display:flex;align-items:flex-end">
+        <div style="width:100%;border-radius:3px 3px 0 0;height:${Math.round(d.v/peakT*100)}%;background:${d.v===maxD?'#1d4ed8':'#93c5fd'};transition:height 1s ease"></div>
+      </div>
+      <span style="font-size:6px;color:#aaa">${d.d.split(' ')[0]}</span>
+    </div>`).join('');
+  const subH = subs.map(s=>{
+    const util=Math.round(s.on/s.pk*100);
+    const uc=util>=80?'#16a34a':util>=50?'#d97706':'#dc2626';
+    return `<div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+        <div>
+          <div class="txt-dim" style="margin-bottom:1px">${s.id}</div>
+          <div class="h2">${s.name}</div>
+          <div class="txt-dim">${s.scope}</div>
+        </div>
+        <div style="text-align:right">
+          ${badge(s.st,SC[s.st]||'#888')}
+          <div style="font-size:16px;font-weight:700;color:#1d4ed8;line-height:1;margin-top:3px">${s.on}</div>
+          <div style="font-size:7px;color:#aaa">of ${s.pk} peak</div>
+        </div>
+      </div>
+      ${bar(util,uc,6)}
+      <div style="margin-top:7px">
+        ${[['SAFETY',s.saf,'#16a34a'],['QUALITY',s.qly,'#0369a1'],['SCHED',s.sch,'#d97706']].map(([l,v,c])=>`
+        <div class="mp-kpi-row">
+          <span class="mp-kpi-l">${l}</span>
+          <div style="flex:1">${bar(v,v>=85?c:'#dc2626',4)}</div>
+          <span class="mp-kpi-v" style="color:${v>=85?c:'#dc2626'}">${v}</span>
+        </div>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+  return `
+  <div class="g4 mb10">
+    ${sc(total,'On Site Today','#1d4ed8','','')}
+    ${sc(subs.length,'Subcontractors','#6d28d9','','')}
+    ${sc(subs.filter(s=>s.st==='ACTIVE').length,'Active','#16a34a','','')}
+    ${sc(Math.round(total/peakT*100)+'%','Utilisation','#d97706','vs peak plan','')}
+  </div>
+  <div class="g2 mb10">
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div class="card">
+        <div class="card-header"><span class="card-title">Daily Manpower — 7 Days</span></div>
+        <div style="display:flex;gap:6;align-items:flex-end;justify-content:center;padding:4px 0">${histH}</div>
+        <div style="display:flex;justify-content:space-between;margin-top:4px">
+          <span class="txt-dim">Peak plan: ${peakT}</span>
+          <span style="font-size:7px;font-weight:700;color:#1d4ed8">Today: ${total}</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Trade Breakdown</span></div>
+        ${[['Pipefitters',145,'#ea580c'],['Structural',68,'#1d4ed8'],['Electricians',52,'#d97706'],['Scaffolders',58,'#16a34a'],['Civil',44,'#0369a1'],['Insulation',38,'#7c3aed'],['Painters',27,'#db2777']].map(([t,v,c])=>`
+        <div style="display:flex;align-items:center;gap:7;margin-bottom:5px">
+          <span class="txt" style="width:90px;flex-shrink:0">${t}</span>
+          <div style="flex:1">${bar(Math.round(v/total*100),c,5)}</div>
+          <span style="font-size:8px;font-weight:700;color:${c};width:24px;text-align:right">${v}</span>
+        </div>`).join('')}
+      </div>
+    </div>
+    <div class="g2" style="align-content:start">${subH}</div>
+  </div>`;
+},
+
+// ── M15 REPORTS ───────────────────────────────────────────
+M15: () => {
+  const rpts = [
+    {no:'WPR-2024-49',type:'WEEKLY',  period:'02–08 Dec 2024',  ov:58.1,spi:0.922,cpi:0.961,hrs:38400, st:'ISSUED'},
+    {no:'WPR-2024-48',type:'WEEKLY',  period:'25 Nov–01 Dec',   ov:56.5,spi:0.921,cpi:0.958,hrs:37800, st:'ISSUED'},
+    {no:'MPR-2024-11', type:'MONTHLY', period:'November 2024',   ov:55.0,spi:0.919,cpi:0.955,hrs:158000,st:'ISSUED'},
+    {no:'WPR-2024-47',type:'WEEKLY',  period:'18–24 Nov 2024',  ov:54.2,spi:0.924,cpi:0.959,hrs:37200, st:'ISSUED'},
+    {no:'MPR-2024-10', type:'MONTHLY', period:'October 2024',    ov:51.0,spi:0.930,cpi:0.961,hrs:152000,st:'ISSUED'},
+    {no:'EXC-2024-Q4', type:'EXEC',    period:'Q4 2024 Review',  ov:58.1,spi:0.922,cpi:0.961,hrs:1840000,st:'DRAFT'},
+  ];
+  const TC={WEEKLY:'#1d4ed8',MONTHLY:'#6d28d9',EXEC:'#db2777'};
+  const risks = [
+    {code:'RSK-001',cat:'SCHEDULE', title:'Compressor delivery delay — long lead item',      score:15,st:'OPEN'},
+    {code:'RSK-002',cat:'SCHEDULE', title:'Insufficient piping workforce mobilisation',       score:12,st:'OPEN'},
+    {code:'RSK-003',cat:'HSE',      title:'LTI recurrence — scaffold/working at height',      score:12,st:'MITIGATING'},
+    {code:'RSK-004',cat:'COST',     title:'Steel price escalation in procurement scope',       score:8, st:'OPEN'},
+    {code:'RSK-005',cat:'TECHNICAL',title:'Instrument loop check completion backlog',          score:8, st:'MITIGATING'},
+    {code:'RSK-006',cat:'COMMERCIAL',title:'Client IFC document approval delays',             score:6, st:'OPEN'},
+  ];
+  const RC = s => s>=15?'#dc2626':s>=10?'#d97706':'#888';
+  const ms = [
+    {code:'MS-001',desc:'Detailed Engineering Complete',type:'DESIGN',     forecast:'2024-01-20',delay:0, st:'COMPLETE'},
+    {code:'MS-003',desc:'Compressor Package FAT',       type:'PROCUREMENT',forecast:'2024-07-28',delay:28,st:'DELAYED'},
+    {code:'MS-004',desc:'A03 Civil/Structural Complete',type:'CONSTRUCTION',forecast:'2024-09-10',delay:10,st:'AT_RISK'},
+    {code:'MS-006',desc:'A03 Ready For Commissioning',  type:'COMMISSIONING',forecast:'2025-05-15',delay:45,st:'DELAYED'},
+    {code:'MS-007',desc:'First Gas',                    type:'STARTUP',    forecast:'2026-07-15',delay:76,st:'AT_RISK'},
+  ];
+  const MSC={COMPLETE:'#16a34a',DELAYED:'#dc2626',AT_RISK:'#d97706'};
+  const rptRows = rpts.map(r=>`<tr>
+    ${td(r.no,{color:'#6d28d9',bold:true,center:false})}
+    ${td(badge(r.type,TC[r.type]||'#888'),{})}
+    ${td(r.period,{center:false})}
+    ${td(r.ov+'%',{bold:true,color:'#1e3a8a',sz:10})}
+    ${td(r.spi,{bold:true,color:r.spi>=1?'#16a34a':'#d97706'})}
+    ${td(r.cpi,{bold:true,color:r.cpi>=1?'#16a34a':'#d97706'})}
+    ${td((r.hrs/1000).toFixed(0)+'k',{color:'#888'})}
+    ${td(badge(r.st,r.st==='ISSUED'?'#16a34a':'#6d28d9',r.st==='ISSUED'?'#f0fdf4':'#f5f3ff'),{})}
+  </tr>`);
+  const riskH = risks.map(r=>`
+    <div style="display:flex;align-items:center;gap:10;padding:8px 0;border-bottom:1px solid #f0f2f5">
+      <div style="width:36px;height:36px;border-radius:4px;flex-shrink:0;background:${RC(r.score)}14;
+        border:1px solid ${RC(r.score)}33;display:flex;align-items:center;justify-content:center;
+        font-size:12px;font-weight:700;color:${RC(r.score)}">${r.score}</div>
+      <div style="flex:1">
+        <div style="font-size:7px;color:#aaa;margin-bottom:2px">${r.code} · ${r.cat}</div>
+        <div class="txt" style="color:#333">${r.title}</div>
+      </div>
+      ${badge(r.st,r.st==='MITIGATING'?'#0369a1':'#dc2626',r.st==='MITIGATING'?'#eff6ff':'#fef2f2')}
+    </div>`).join('');
+  const msH = ms.map(m=>`
+    <div style="display:flex;align-items:center;gap:8;padding:7px 0;border-bottom:1px solid #f0f2f5">
+      <div class="dot" style="background:${MSC[m.st]||'#aaa'}"></div>
+      <div style="flex:1">
+        <div style="font-size:7px;color:#aaa;margin-bottom:1px">${m.code} · ${m.type}</div>
+        <div class="txt" style="color:#333">${m.desc}</div>
+      </div>
+      <div style="text-align:right">
+        ${m.delay>0?`<div style="font-size:7px;font-weight:700;color:#dc2626">+${m.delay}d</div>`:''}
+        <div style="font-size:7px;color:#aaa">${m.forecast}</div>
+      </div>
+    </div>`).join('');
+  return `
+  <div class="g4 mb10">
+    ${sc('49','Weekly Reports','#1d4ed8','','')}
+    ${sc('11','Monthly Reports','#6d28d9','','')}
+    ${sc('8','Milestones','#047857','','')}
+    ${sc('6','Open Risks','#dc2626','','')}
+  </div>
+  ${tblWrap('Periodic Reports','#6d28d9',
+    [{l:'Report No',center:false},{l:'Type',center:false},{l:'Period',center:false},'Overall','SPI','CPI','Man-Hrs','Status'],
+    rptRows)}
+  <div class="g2">
+    <div class="card">
+      <div class="card-header"><span class="card-title">Risk Register</span></div>
+      ${riskH}
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-title">Milestone Tracker</span></div>
+      ${msH}
+    </div>
+  </div>`;
+},
+
+}; // end RENDERERS
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
